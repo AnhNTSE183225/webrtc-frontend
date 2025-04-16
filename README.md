@@ -2,8 +2,6 @@
 
 A modern, React-based WebRTC application that enables real-time screen sharing and communication between peers in a room.
 
-![WebRTC Frontend Demo](https://via.placeholder.com/800x400?text=WebRTC+Frontend+Demo)
-
 ## 🚀 Features
 
 - **Real-time Screen Sharing**: Share your screen with multiple peers simultaneously
