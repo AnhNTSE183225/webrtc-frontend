@@ -1,6 +1,6 @@
 import React from 'react'
 import { v4 as uuid } from 'uuid';
-import { useStreaming } from './components/useStreaming';
+import { useStreaming } from './components/useStreamingV2';
 
 const URL = "ws://localhost:8080/ws";
 const roomId = 'test';
