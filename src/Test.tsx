@@ -13,17 +13,22 @@ export const Test: React.FC = () => {
         isStreaming,
         startStream,
         remoteStreams,
-        peers
+        activeStreams,
+        peers,
+        streamers
     } = useStreaming({ userId, URL, roomId });
 
     return (
         <div className='home'>
             <div>User ID: {userId}</div>
-            <div>Room ID: {roomId} - Users ({peers.length}) {peers.join(",")}</div>
+            <div>Room ID: {roomId} - Users ({peers.length}) {peers.join(" | ")}</div>
             <div>Status: {isConnected ? 'CONNECTED' : 'NOT CONNECTED'}</div>
             <div>Is Streaming: {isStreaming ? 'YES' : 'NO'}</div>
-            <button onClick={startStream}>Start Stream</button>
-            {Object.entries(remoteStreams).map(([peerId, stream]) => (
+            <div>Streamers: {streamers.join(" | ")}</div>
+            <div>WebRTC users connected: {Object.entries(remoteStreams).length}</div>
+            <button onClick={startStream} disabled={isStreaming}>{isStreaming ? 'You are streaming' : 'Start Stream'}</button>
+
+            {Object.entries(activeStreams).map(([peerId, stream]) => (
                 <div key={peerId} style={{ marginBottom: "20px" }}>
                     <p>User: {peerId}</p>
                     <video
@@ -38,7 +43,7 @@ export const Test: React.FC = () => {
                     ></video>
                 </div>
             ))}
-            {Object.keys(remoteStreams).length === 0 && (
+            {Object.keys(activeStreams).length === 0 && (
                 <p>No remote streams available.</p>
             )}
         </div>

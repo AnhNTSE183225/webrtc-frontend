@@ -17,6 +17,8 @@ enum SignalState {
     JOIN = "JOIN",
     OFFER = "OFFER",
     ANSWER = "ANSWER",
+    STARTSTREAM = "STARTSTREAM",
+    STOPSTREAM = "STOPSTREAM",
     CANDIDATE = "CANDIDATE",
     LEAVE = "LEAVE"
 }
@@ -28,6 +30,7 @@ interface SignalingMessage {
     sdp?: any;
     candidate?: any;
     users?: [];
+    streamers?: [];
 }
 
 // Create a more robust dummy stream that will be visible
@@ -75,6 +78,10 @@ export function useStreaming({ userId, URL, roomId }: StreamingProps) {
 
     const localStream = useRef<MediaStream | null>(null);
     const [remoteStreams, setRemoteStreams] = useState<Record<string, MediaStream>>({});
+    const [streamers, setStreamers] = useState<string[]>([]);
+    const activeStreams = Object.fromEntries(
+        Object.entries(remoteStreams).filter(([userId]) => streamers.includes(userId))
+    );
 
     const stompClient = useRef<Client | null>(null);
     const peerConnections = useRef<Record<string, RTCPeerConnection>>({});
@@ -118,6 +125,13 @@ export function useStreaming({ userId, URL, roomId }: StreamingProps) {
             case SignalState.LEAVE: {
                 if (signal.users) {
                     setPeers(signal.users);
+                }
+                break;
+            }
+            case SignalState.STARTSTREAM:
+            case SignalState.STOPSTREAM: {
+                if (signal.streamers) {
+                    setStreamers(signal.streamers);
                 }
                 break;
             }
@@ -199,6 +213,13 @@ export function useStreaming({ userId, URL, roomId }: StreamingProps) {
             audio: true
         });
 
+        stream.getTracks().forEach(track => {
+            track.onended = () => {
+                sendSignal({type: SignalState.STOPSTREAM, sender: userId});
+                setIsStreaming(false);
+            }
+        })
+
         for (const peer of peers.filter(p => p !== userId)) {
             const pc = createPeerConnection(peer);
             stream.getTracks().forEach(track => pc.addTrack(track, stream));
@@ -210,6 +231,7 @@ export function useStreaming({ userId, URL, roomId }: StreamingProps) {
         }
 
         localStream.current = stream;
+        sendSignal({ type: SignalState.STARTSTREAM, sender: userId });
         setIsStreaming(true);
     }
 
@@ -227,6 +249,7 @@ export function useStreaming({ userId, URL, roomId }: StreamingProps) {
 
             console.log('Send signal?');
             sendSignal({ type: SignalState.OFFER, sender: userId, receiver: peerId, sdp: offer });
+            sendSignal({ type: SignalState.STARTSTREAM, sender: userId});
         } catch (error) {
             console.error(error);
         }
@@ -333,6 +356,8 @@ export function useStreaming({ userId, URL, roomId }: StreamingProps) {
         isStreaming,
         startStream,
         remoteStreams,
-        peers
+        activeStreams,
+        peers,
+        streamers
     };
 }
